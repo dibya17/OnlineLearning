@@ -1,5 +1,6 @@
 from numpy import *
 
+batch_size_perc=0.8
 # y = mx + b
 # m is slope, b is y-intercept
 def compute_error_for_line_given_points(m, points):
@@ -34,6 +35,23 @@ def gradient_descent_runner(points, starting_weights, learning_rate, num_iterati
             break
     return [m]
 
+def stochastic_gradient_descent_runner(points, starting_weights, learning_rate, num_iterations):
+    sampleSize=len(points)
+    m = starting_weights
+    for i in range(num_iterations):
+        batch_size=min(int(batch_size_perc*sampleSize),sampleSize)
+        random.shuffle(points)
+        prev_m=m
+        m = step_gradient(prev_m, array(points[:batch_size]),\
+                          learning_rate)
+        #if the error rate between two consecutive iteration reduces to less than threshold, exit
+        if(abs(compute_error_for_line_given_points(m,points[:batch_size])-
+                compute_error_for_line_given_points(prev_m,points[:batch_size]))<1e-7):
+            print "terminating in "+str(i)+" iterations"
+            break
+    return [m]
+
+
 def run():
     #define hyperparameters learning rate & iterations
     learning_rate = 0.0001
@@ -42,7 +60,7 @@ def run():
     #read data from kagle train set for housing
     points = genfromtxt("train.csv", delimiter=",",skip_header=1,usecols=(4,46,80),dtype=float32)
     N=len(points)
-
+    print type(points)
     #set the initial weights from normal distribution curve
     initial_weights = random.standard_normal(size=(1,3))
 
@@ -65,7 +83,7 @@ def run():
     print "Starting gradient descent at weights = {0},error = {1}".format(initial_weights,\
     compute_error_for_line_given_points(initial_weights, trainPoints))
     print "Running..."
-    m = gradient_descent_runner(trainPoints, initial_weights, learning_rate, num_iterations)
+    m = stochastic_gradient_descent_runner(trainPoints, initial_weights, learning_rate, num_iterations)
     print "After {0} iterations weights = {1}, error = {2}".format(num_iterations, m\
     , compute_error_for_line_given_points(m, trainPoints))
 
